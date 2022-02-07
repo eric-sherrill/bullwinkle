@@ -1,0 +1,80 @@
+services:
+  opensearch-dashboards:
+    container_name: opensearch-dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]'
+    expose:
+    - "5601"
+    image: opensearchproject/opensearch-dashboards:latest
+    networks:
+      opensearch-net: null
+    ports:
+    - mode: ingress
+      target: 5601
+      published: 5601
+      protocol: tcp
+  opensearch-node1:
+    container_name: opensearch-node1
+    environment:
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+      bootstrap.memory_lock: "true"
+      cluster.initial_master_nodes: opensearch-node1,opensearch-node2
+      cluster.name: opensearch-cluster
+      discovery.seed_hosts: opensearch-node1,opensearch-node2
+      node.name: opensearch-node1
+    image: opensearchproject/opensearch:latest
+    networks:
+      opensearch-net: null
+    ports:
+    - mode: ingress
+      target: 9200
+      published: 9200
+      protocol: tcp
+    - mode: ingress
+      target: 9600
+      published: 9600
+      protocol: tcp
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+    - type: volume
+      source: opensearch-data1
+      target: /usr/share/opensearch/data
+      volume: {}
+  opensearch-node2:
+    container_name: opensearch-node2
+    environment:
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+      bootstrap.memory_lock: "true"
+      cluster.initial_master_nodes: opensearch-node1,opensearch-node2
+      cluster.name: opensearch-cluster
+      discovery.seed_hosts: opensearch-node1,opensearch-node2
+      node.name: opensearch-node2
+    image: opensearchproject/opensearch:latest
+    networks:
+      opensearch-net: null
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+    - type: volume
+      source: opensearch-data2
+      target: /usr/share/opensearch/data
+      volume: {}
+networks:
+  opensearch-net:
+    name: opensearch_opensearch-net
+volumes:
+  opensearch-data1:
+    name: opensearch_opensearch-data1
+  opensearch-data2:
+    name: opensearch_opensearch-data2
